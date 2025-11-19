@@ -1,7 +1,7 @@
 // Game Configuration
 const Config = {
     PLAYER: {
-        SIZE: 20,
+        SIZE: 30, // Increased from 20 to 30
         SPEED: 7,
         HEALTH: 100,
         BLINK_DURATION: 1000
@@ -138,6 +138,12 @@ function init() {
         if (e.key === '1' && Game.player.unlockedWeapons.includes('PULSE_PISTOL')) switchWeapon('PULSE_PISTOL');
         if (e.key === '3' && Game.player.unlockedWeapons.includes('SHOTGUN')) switchWeapon('SHOTGUN');
         if (e.key === '2' && Game.player.unlockedWeapons.includes('AK47')) switchWeapon('AK47');
+
+        // NEW: Pause Logic - Handles P, Escape, and Spacebar
+        if (e.key.toLowerCase() === 'p' || e.key === 'Escape' || e.key === ' ') {
+            e.preventDefault(); // Stop spacebar from scrolling the page
+            togglePause();
+        }
     });
 
     document.addEventListener('keyup', (e) => {
@@ -557,7 +563,7 @@ function spawnBoss() {
 }
 
 function spawnEnemy(typeOverride) {
-    // 👇 MODIFICATION: Check for enemy limit before spawning
+    // 燥 MODIFICATION: Check for enemy limit before spawning
     if (Game.enemies.length >= Config.GAME.MAX_ENEMIES) {
         return;
     }
@@ -590,7 +596,7 @@ function spawnEnemy(typeOverride) {
 }
 
 function spawnWave() {
-    // 👇 MODIFICATION: Only start the wave if the current enemy count is low enough
+    // 燥 MODIFICATION: Only start the wave if the current enemy count is low enough
     if (Game.enemies.length >= Config.GAME.MAX_ENEMIES) {
         return;
     }
@@ -845,7 +851,7 @@ function render() {
 
             // Basic health bar 
             Game.ctx.fillStyle = '#ff0000';
-            ctx.fillRect(
+            Game.ctx.fillRect(
                 enemy.x - enemyType.SIZE,
                 enemy.y - enemyType.SIZE - 8,
                 (enemyType.SIZE * 2) * (enemy.health / Config.ENEMIES[enemy.type].HEALTH),
@@ -863,26 +869,86 @@ function render() {
         Game.ctx.fill();
     });
 
-    // Draw player
-    if (Game.assets.images.Player) {
-        Game.ctx.save();
-        if (Date.now() - Game.player.lastHit < Config.PLAYER.BLINK_DURATION) {
-            Game.ctx.globalAlpha = 0.5 + 0.5 * Math.sin(Date.now() * 0.01);
-        }
-        Game.ctx.drawImage(
-            Game.assets.images.Player,
-            Game.player.x - Config.PLAYER.SIZE,
-            Game.player.y - Config.PLAYER.SIZE,
-            Config.PLAYER.SIZE * 2,
-            Config.PLAYER.SIZE * 2
-        );
-        Game.ctx.restore();
-    } else {
-        Game.ctx.fillStyle = '#00ffff';
-        Game.ctx.beginPath();
-        Game.ctx.arc(Game.player.x, Game.player.y, Config.PLAYER.SIZE, 0, Math.PI * 2);
-        Game.ctx.fill();
+    // --- DRAW PLAYER AS FUTURISTIC DISC ---
+    Game.ctx.save();
+    
+    // Apply blink effect if hit
+    if (Date.now() - Game.player.lastHit < Config.PLAYER.BLINK_DURATION) {
+        Game.ctx.globalAlpha = 0.5 + 0.5 * Math.sin(Date.now() * 0.01);
     }
+
+    const P = Config.PLAYER.SIZE;
+    const x = Game.player.x;
+    const y = Game.player.y;
+    const neonBlue = '#00ffff';
+    const neonGlow = 'rgba(0, 255, 255, 0.8)';
+    const timeFactor = Date.now() / 1000;
+    
+    // Calculate rotation towards the mouse
+    const dx = Game.mouse.x - x;
+    const dy = Game.mouse.y - y;
+    const angle = Math.atan2(dy, dx); 
+    
+    Game.ctx.translate(x, y);
+    Game.ctx.rotate(angle + timeFactor * 0.5); // Spin effect for the player
+    
+    // Outer Glow Effect
+    Game.ctx.shadowBlur = 15;
+    Game.ctx.shadowColor = neonGlow;
+    
+    // Draw segmented outer ring (Large circle with segments)
+    Game.ctx.strokeStyle = neonBlue;
+    Game.ctx.lineWidth = 3;
+    
+    const segmentCount = 6;
+    const outerRadius = P * 0.9;
+    const innerRadius = P * 0.5;
+    const gapAngle = 0.1; // Space between segments
+
+    for (let i = 0; i < segmentCount; i++) {
+        const start = i * (Math.PI * 2 / segmentCount) + gapAngle;
+        const end = (i + 1) * (Math.PI * 2 / segmentCount) - gapAngle;
+        
+        Game.ctx.beginPath();
+        Game.ctx.arc(0, 0, outerRadius, start, end);
+        Game.ctx.stroke();
+    }
+    
+    // Draw Inner Ring (The maze-like inner structure)
+    Game.ctx.beginPath();
+    Game.ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
+    Game.ctx.stroke();
+
+    // Draw Central Core (Solid glowing circle)
+    Game.ctx.fillStyle = neonBlue;
+    Game.ctx.shadowBlur = 20;
+    Game.ctx.beginPath();
+    Game.ctx.arc(0, 0, P * 0.3, 0, Math.PI * 2);
+    Game.ctx.fill();
+
+    // Secondary detail: four small lines connecting the inner and outer rings (based on the image)
+    Game.ctx.lineWidth = 2;
+    Game.ctx.shadowBlur = 10;
+    for (let i = 0; i < 4; i++) {
+        const detailAngle = i * (Math.PI / 2) + Math.PI / 4;
+        Game.ctx.beginPath();
+        Game.ctx.moveTo(
+            Math.cos(detailAngle) * innerRadius,
+            Math.sin(detailAngle) * innerRadius
+        );
+        Game.ctx.lineTo(
+            Math.cos(detailAngle) * outerRadius,
+            Math.sin(detailAngle) * outerRadius
+        );
+        Game.ctx.stroke();
+    }
+    
+    // Reset shadow/transform
+    Game.ctx.shadowBlur = 0;
+    Game.ctx.shadowColor = 'transparent';
+    Game.ctx.restore();
+    // --- END DRAW PLAYER AS FUTURISTIC DISC ---
+
 
     // Draw health bar
     Game.ctx.fillStyle = '#ff0000';
@@ -896,9 +962,26 @@ function render() {
     Game.ctx.strokeRect(20, Game.canvas.height - 30, 200, 20);
 }
 
+// NEW: Function to toggle the pause state and display the pause screen
+function togglePause() {
+    if (Game.player.health <= 0) return; 
+
+    Game.running = !Game.running; 
+    
+    const pauseScreen = document.getElementById('pause-screen');
+    if (pauseScreen) {
+        // Use 'show' class which handles animation and visibility for all notifications
+        if (Game.running) {
+            pauseScreen.classList.remove('show');
+        } else {
+            pauseScreen.classList.add('show');
+        }
+    }
+}
+
 // Function already exists, consolidating to match user's context better
 function spawnEnemy(typeOverride) {
-    // 👇 MAX ENEMIES CHECK APPLIED HERE
+    // 燥 MAX ENEMIES CHECK APPLIED HERE
     if (Game.enemies.length >= Config.GAME.MAX_ENEMIES) {
         return;
     }
@@ -931,7 +1014,7 @@ function spawnEnemy(typeOverride) {
 }
 
 function spawnWave() {
-    // 👇 MAX ENEMIES CHECK APPLIED HERE
+    // 燥 MAX ENEMIES CHECK APPLIED HERE
     if (Game.enemies.length >= Config.GAME.MAX_ENEMIES) {
         return;
     }
