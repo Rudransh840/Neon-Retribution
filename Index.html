@@ -120,6 +120,16 @@
             <h2>GAME PAUSED</h2>
             <p class="pause-resume-info">Press 'P', 'Escape', or 'Spacebar' to resume combat.</p>
         </div>
+        
+        <div id="boost-notification" class="notification unlock-notification">
+            <div class="unlock-badge">
+                <div class="unlock-icon-wrapper">
+                    <p class="weapon-icon boost-icon">🔥</p>
+                </div>
+                <h2 class="boost-title">FIRE RATE BOOST!</h2>
+            </div>
+            <p class="boost-desc">Weapon cooldown is reduced for 5 seconds!</p>
+        </div>
 
         <div id="stage-start-notification" class="notification">
             <div class="notification-header">
@@ -197,7 +207,7 @@
     </div>
 
     <script src="difficultymanager.js"></script>
+        <script src="Game.js"></script>
     <script src="drone.js"></script>
-    <script src="Game.js"></script>
 </body>
 </html>

@@ -113,77 +113,364 @@ class Drone {
             this.currentMove.y = (Math.random() - 0.5) * 2;
         }
     }
-
     draw(ctx) {
-        const isBoss = this.type === 'BOSS';
-        
-        // Draw drone body with stage-based appearance
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Draw drone details
-        ctx.strokeStyle = isBoss ? '#FFFF00' : (this.stage >= 3 ? '#FFFF00' : '#FFFFFF');
-        ctx.lineWidth = isBoss ? 5 : (this.stage >= 4 ? 3 : 2);
-        ctx.stroke();
-        
-        // Draw drone "eyes"
-        const eyeColor = isBoss ? '#00FFFF' : (this.stage >= 4 ? '#00FF00' : (this.stage >= 3 ? '#FFFF00' : '#FF0000'));
-        ctx.fillStyle = eyeColor;
-        ctx.beginPath();
-        ctx.arc(this.x - 3, this.y - 2, isBoss ? 6 : (this.stage >= 4 ? 3 : 2), 0, Math.PI * 2);
-        ctx.arc(this.x + 3, this.y - 2, isBoss ? 6 : (this.stage >= 4 ? 3 : 2), 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Draw propulsion effect
-        const propulsionSize = 3 + (this.stage * 0.5);
-        ctx.fillStyle = isBoss ? '#FF66FF' : (this.stage >= 4 ? '#00FF00' : '#00FFFF');
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y + this.size/2 + 2, propulsionSize, 2, 0, 0, Math.PI * 2);
-        ctx.fill();
+    const isBoss = this.type === 'BOSS';
+    const now = Date.now();
+    const enemyType = Config.ENEMIES[this.type];
 
-        // Draw stage indicator for advanced enemies
-        if (this.stage >= 3 && !isBoss) {
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = '10px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(`Lvl ${this.stage}`, this.x, this.y - this.size - 5);
+    // ⭐⭐⭐ SPECIAL DRAWING FOR STAGE-1 DRONE ⭐⭐⭐
+    if (this.type === 'DRONE' && this.stage === 1) {
+
+        const SHIELD_BREAK_DURATION = 150; 
+        const isShieldBroken = (now - this.lastHitTime) < SHIELD_BREAK_DURATION;
+        const hitProgress = (now - this.lastHitTime) / SHIELD_BREAK_DURATION;
+
+        ctx.save();
+        ctx.translate(this.x, this.y);
+
+        // --- SHIELD IMPACT BURST ---
+        if (isShieldBroken) {
+            ctx.shadowColor = '#00ffff';
+            ctx.shadowBlur = 20 * (1 - hitProgress);
+            ctx.fillStyle = `rgba(0, 255, 255, ${0.8 * (1 - hitProgress)})`;
+
+            ctx.beginPath();
+            const burstRadius = this.size * 2.5 * (1 - hitProgress * 0.5);
+            ctx.arc(0, 0, burstRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
         }
-        
-        // --- Health Bar Drawing ---
-        if (isBoss) {
-             // Display massive, centered health bar for the boss
-             const barWidth = 400;
-             const barHeight = 25;
-             const healthRatio = this.health / this.maxHealth;
-             
-             ctx.fillStyle = '#111111';
-             ctx.fillRect(ctx.canvas.width/2 - barWidth/2, 40, barWidth, barHeight);
-             
-             ctx.fillStyle = '#ff0000';
-             ctx.fillRect(ctx.canvas.width/2 - barWidth/2, 40, barWidth * healthRatio, barHeight);
 
-             ctx.strokeStyle = '#ffffff';
-             ctx.lineWidth = 2;
-             ctx.strokeRect(ctx.canvas.width/2 - barWidth/2, 40, barWidth, barHeight);
-             
-             ctx.fillStyle = '#ffffff';
-             ctx.font = 'bold 16px Courier New';
-             ctx.textAlign = 'center';
-             ctx.fillText('BOSS HEALTH', ctx.canvas.width/2, 35);
-        } else {
-            // Standard enemy health bar
-            const enemyType = Config.ENEMIES[this.type];
-            ctx.fillStyle = '#ff0000';
-            ctx.fillRect(
-                this.x - enemyType.SIZE,
-                this.y - enemyType.SIZE - 8,
-                (enemyType.SIZE * 2) * (this.health / this.maxHealth),
-                3
+        // --- RED INNER STAR BODY ---
+        const redCore = '#ff3366';
+        const neonOutline = '#00ffff';
+        const coreSize = this.size * 0.8;
+
+        ctx.globalAlpha = isShieldBroken ? (0.7 + 0.3 * Math.random()) : 1;
+
+        ctx.shadowColor = redCore;
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = redCore;
+
+        ctx.beginPath();
+        ctx.arc(0, 0, coreSize * 0.5, 0, Math.PI * 2);
+
+        const spikeCount = 8;
+        for (let i = 0; i < spikeCount; i++) {
+            const angle = i * (Math.PI * 2 / spikeCount);
+            const spikeLength = coreSize * 1.2;
+
+            ctx.lineTo(
+                Math.cos(angle) * spikeLength,
+                Math.sin(angle) * spikeLength
             );
         }
+        ctx.closePath();
+        ctx.fill();
+
+        // --- OUTER CYAN SHIELD RING ---
+        ctx.shadowColor = neonOutline;
+        ctx.shadowBlur = 10;
+        ctx.strokeStyle = neonOutline;
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.restore();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+
+        return; // STOP here → don't draw default drone
     }
+
+    // ⭐⭐⭐ BOSS DRAWING ⭐⭐⭐
+    if (isBoss) {
+        // Boss body
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Massive boss HP bar
+        const barWidth = 400;
+        const barHeight = 25;
+        const healthRatio = this.health / this.maxHealth;
+
+        ctx.fillStyle = '#111111';
+        ctx.fillRect(ctx.canvas.width/2 - barWidth/2, 40, barWidth, barHeight);
+
+        ctx.fillStyle = '#ff0000';
+        ctx.fillRect(ctx.canvas.width/2 - barWidth/2, 40, barWidth * healthRatio, barHeight);
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(ctx.canvas.width/2 - barWidth/2, 40, barWidth, barHeight);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Courier New';
+        ctx.textAlign = 'center';
+        ctx.fillText('BOSS HEALTH', ctx.canvas.width/2, 35);
+
+        return;
+    }
+
+    // ⭐⭐⭐ HIGHER STAGE DRONES (2,3,4) ⭐⭐⭐
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Outline
+    ctx.strokeStyle = this.stage >= 4 ? '#00FF00' : (this.stage >= 3 ? '#FFFF00' : '#FFFFFF');
+    ctx.lineWidth = this.stage >= 4 ? 3 : 2;
+    ctx.stroke();
+
+    // Eyes
+    const eyeColor =
+        this.stage >= 4 ? '#00FF00' :
+        this.stage >= 3 ? '#FFFF00' :
+        '#FF0000';
+
+    ctx.fillStyle = eyeColor;
+    ctx.beginPath();
+    ctx.arc(this.x - 3, this.y - 2, this.stage >= 4 ? 3 : 2, 0, Math.PI * 2);
+    ctx.arc(this.x + 3, this.y - 2, this.stage >= 4 ? 3 : 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Propulsion
+    const propulsionSize = 3 + (this.stage * 0.5);
+    ctx.fillStyle = this.stage >= 4 ? '#00FF00' : '#00FFFF';
+    ctx.beginPath();
+    ctx.ellipse(this.x, this.y + this.size/2 + 2, propulsionSize, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Level indicator
+    if (this.stage >= 3) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '10px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Lvl ${this.stage}`, this.x, this.y - this.size - 5);
+    }
+
+    // Health bar
+    ctx.fillStyle = '#ff0000';
+    ctx.fillRect(
+        this.x - enemyType.SIZE,
+        this.y - enemyType.SIZE - 8,
+        (enemyType.SIZE * 2) * (this.health / this.maxHealth),
+        3
+    );
+}
+draw(ctx) {
+    const isBoss = this.type === 'BOSS';
+    const now = Date.now();
+    const enemyType = Config.ENEMIES[this.type];
+
+    // ⭐⭐⭐ SPECIAL DRAWING FOR STAGE-1 DRONE ⭐⭐⭐
+    if (this.type === 'DRONE' && this.stage === 1) {
+
+        const SHIELD_BREAK_DURATION = 150; 
+        const isShieldBroken = (now - this.lastHitTime) < SHIELD_BREAK_DURATION;
+        const hitProgress = (now - this.lastHitTime) / SHIELD_BREAK_DURATION;
+
+        ctx.save();
+        ctx.translate(this.x, this.y);
+
+        // --- SHIELD IMPACT BURST ---
+        if (isShieldBroken) {
+            ctx.shadowColor = '#00ffff';
+            ctx.shadowBlur = 20 * (1 - hitProgress);
+            ctx.fillStyle = `rgba(0, 255, 255, ${0.8 * (1 - hitProgress)})`;
+
+            ctx.beginPath();
+            const burstRadius = this.size * 2.5 * (1 - hitProgress * 0.5);
+            ctx.arc(0, 0, burstRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+        }
+
+        // --- RED INNER STAR BODY ---
+        const redCore = '#ff3366';
+        const neonOutline = '#00ffff';
+        const coreSize = this.size * 0.8;
+
+        ctx.globalAlpha = isShieldBroken ? (0.7 + 0.3 * Math.random()) : 1;
+
+        ctx.shadowColor = redCore;
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = redCore;
+
+        ctx.beginPath();
+        ctx.arc(0, 0, coreSize * 0.5, 0, Math.PI * 2);
+
+        const spikeCount = 8;
+        for (let i = 0; i < spikeCount; i++) {
+            const angle = i * (Math.PI * 2 / spikeCount);
+            const spikeLength = coreSize * 1.2;
+
+            ctx.lineTo(Math.cos(angle) * spikeLength, Math.sin(angle) * spikeLength);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        // --- OUTER CYAN SHIELD RING ---
+        ctx.shadowColor = neonOutline;
+        ctx.shadowBlur = 10;
+        ctx.strokeStyle = neonOutline;
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.restore();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+
+        return; // STOP here → don't draw default drone
+    }
+
+    // ⭐⭐⭐ NEW SKULL BOSS DRAWING ⭐⭐⭐
+    if (isBoss) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+
+        const pulse = 1 + 0.15 * Math.sin(Date.now() * 0.005);
+
+        // --- OUTER AURA ---
+        ctx.shadowColor = 'rgba(255, 0, 0, 1)';
+        ctx.shadowBlur = 35 * pulse;
+        ctx.fillStyle = `rgba(255, 0, 0, ${0.3 + 0.3 * pulse})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size * 2.3 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+
+        // --- SKULL OUTLINE ---
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#ff0044';
+        ctx.fillStyle = '#330010';
+        ctx.beginPath();
+        ctx.ellipse(0, -5, this.size * 1.3, this.size * 1.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // --- SKULL EYES ---
+        const eyeGlow = 10 + 5 * pulse;
+        ctx.shadowColor = '#ff0066';
+        ctx.shadowBlur = eyeGlow;
+
+        ctx.fillStyle = '#ff0044';
+        ctx.beginPath();
+        ctx.arc(-this.size * 0.55, -this.size * 0.2, this.size * 0.45, 0, Math.PI * 2);
+        ctx.arc(this.size * 0.55, -this.size * 0.2, this.size * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+
+        // --- SKULL NOSE ---
+        ctx.fillStyle = '#990022';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-this.size * 0.3, this.size * 0.4);
+        ctx.lineTo(this.size * 0.3, this.size * 0.4);
+        ctx.closePath();
+        ctx.fill();
+
+        // --- TEETH ---
+        ctx.strokeStyle = '#ff3355';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-this.size * 0.9, this.size * 0.9);
+        ctx.lineTo(this.size * 0.9, this.size * 0.9);
+        ctx.stroke();
+
+        for (let i = -4; i <= 4; i++) {
+            ctx.beginPath();
+            ctx.moveTo(i * (this.size * 0.2), this.size * 0.9);
+            ctx.lineTo(i * (this.size * 0.17), this.size * 1.25);
+            ctx.stroke();
+        }
+
+        ctx.restore();
+
+        // --- BOSS HEALTH BAR ---
+        const barWidth = 450;
+        const barHeight = 28;
+        const healthRatio = this.health / this.maxHealth;
+
+        ctx.fillStyle = '#111';
+        ctx.fillRect(ctx.canvas.width / 2 - barWidth / 2, 40, barWidth, barHeight);
+
+        ctx.fillStyle = '#ff0033';
+        ctx.fillRect(ctx.canvas.width / 2 - barWidth / 2, 40, barWidth * healthRatio, barHeight);
+
+        ctx.strokeStyle = '#ff4477';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(ctx.canvas.width / 2 - barWidth / 2, 40, barWidth, barHeight);
+
+        ctx.fillStyle = '#ff88aa';
+        ctx.font = 'bold 18px Courier New';
+        ctx.textAlign = 'center';
+        ctx.fillText('NEON SKULL BOSS', ctx.canvas.width / 2, 35);
+
+        return;
+    }
+
+    // ⭐⭐⭐ HIGHER STAGE DRONES (2,3,4) ⭐⭐⭐
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Outline
+    ctx.strokeStyle = this.stage >= 4 ? '#00FF00' : (this.stage >= 3 ? '#FFFF00' : '#FFFFFF');
+    ctx.lineWidth = this.stage >= 4 ? 3 : 2;
+    ctx.stroke();
+
+    // Eyes
+    const eyeColor =
+        this.stage >= 4 ? '#00FF00' :
+        this.stage >= 3 ? '#FFFF00' :
+        '#FF0000';
+
+    ctx.fillStyle = eyeColor;
+    ctx.beginPath();
+    ctx.arc(this.x - 3, this.y - 2, this.stage >= 4 ? 3 : 2, 0, Math.PI * 2);
+    ctx.arc(this.x + 3, this.y - 2, this.stage >= 4 ? 3 : 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Propulsion
+    const propulsionSize = 3 + (this.stage * 0.5);
+    ctx.fillStyle = this.stage >= 4 ? '#00FF00' : '#00FFFF';
+    ctx.beginPath();
+    ctx.ellipse(this.x, this.y + this.size/2 + 2, propulsionSize, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Level indicator
+    if (this.stage >= 3) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '10px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Lvl ${this.stage}`, this.x, this.y - this.size - 5);
+    }
+
+    // Health bar
+    ctx.fillStyle = '#ff0000';
+    ctx.fillRect(
+        this.x - enemyType.SIZE,
+        this.y - enemyType.SIZE - 8,
+        (enemyType.SIZE * 2) * (this.health / this.maxHealth),
+        3
+    );
+}
+
+
 
     // Method to handle stage transitions
     upgradeToStage(newStage) {

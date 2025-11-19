@@ -724,6 +724,55 @@ body {
     color: var(--warning-yellow);
 }
 
+/* Custom styles for the FIRESTORM BOOST notification */
+#boost-notification.notification {
+    border-color: var(--danger-red);
+    background: rgba(40, 0, 0, 0.95);
+    box-shadow: 0 0 60px rgba(255, 51, 102, 0.5), var(--shadow-strong);
+}
+
+#boost-notification .boost-title {
+    color: var(--danger-red);
+    text-shadow: 0 0 25px rgba(255, 51, 102, 0.8);
+}
+
+#boost-notification .unlock-icon-wrapper {
+    border: 3px solid var(--danger-red);
+    box-shadow: 0 0 30px rgba(255, 51, 102, 0.5);
+    background: linear-gradient(135deg, rgba(255, 51, 102, 0.2), rgba(255, 51, 102, 0.1));
+    animation: none;
+}
+
+#boost-notification .boost-icon {
+    color: var(--danger-red);
+    font-size: 3.5rem;
+}
+
+/* Style for when the boost is expired */
+#boost-notification.expired {
+    border-color: var(--primary-cyan);
+    background: rgba(0, 30, 50, 0.95);
+    box-shadow: 0 0 60px rgba(0, 255, 255, 0.5), var(--shadow-strong);
+}
+
+#boost-notification.expired h2 {
+    color: var(--primary-cyan);
+    text-shadow: 0 0 25px rgba(0, 255, 255, 0.8);
+}
+
+#boost-notification.expired .unlock-icon-wrapper {
+    border: 3px solid var(--primary-cyan);
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 255, 0.1));
+    animation: none;
+}
+
+#boost-notification.expired .boost-icon {
+    color: var(--primary-cyan);
+    font-size: 3.5rem;
+}
+
+
 /* Stage Complete Notification */
 .complete-notification {
     border-color: var(--success-green);
