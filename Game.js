@@ -1,3 +1,5 @@
+// Game.js - UPDATED WITH STAGE-BASED PLAYER DRAWING
+
 // Game Configuration
 const Config = {
     PLAYER: {
@@ -25,7 +27,7 @@ const Config = {
             PELLETS: 8
         },
         AK47: {
-            NAME: "AK-47",
+            NAME: "Assault rifle",
             COOLDOWN: 250,
             BURST_COUNT: 3, // NEW: Number of bullets per burst
             BURST_DELAY: 50, // NEW: Delay between burst shots (ms)
@@ -869,7 +871,7 @@ function render() {
         Game.ctx.fill();
     });
 
-    // --- DRAW PLAYER AS FUTURISTIC DISC ---
+    // --- DRAW PLAYER AS FUTURISTIC DISC (STAGE-BASED) ---
     Game.ctx.save();
     
     // Apply blink effect if hit
@@ -880,8 +882,8 @@ function render() {
     const P = Config.PLAYER.SIZE;
     const x = Game.player.x;
     const y = Game.player.y;
-    const neonBlue = '#00ffff';
-    const neonGlow = 'rgba(0, 255, 255, 0.8)';
+    let neonBlue = '#00ffff';
+    let neonGlow = 'rgba(0, 255, 255, 0.8)';
     const timeFactor = Date.now() / 1000;
     
     // Calculate rotation towards the mouse
@@ -890,62 +892,229 @@ function render() {
     const angle = Math.atan2(dy, dx); 
     
     Game.ctx.translate(x, y);
-    Game.ctx.rotate(angle + timeFactor * 0.5); // Spin effect for the player
+    // STAGE 4 uses a slower rotation to signify stability/max power
+    Game.ctx.rotate(angle + (Game.currentStage === 4 ? timeFactor * 0.2 : timeFactor * 0.5)); 
     
     // Outer Glow Effect
-    Game.ctx.shadowBlur = 15;
+    Game.ctx.shadowBlur = Game.currentStage * 5 + 10; // Glow intensity scales with stage
     Game.ctx.shadowColor = neonGlow;
     
-    // Draw segmented outer ring (Large circle with segments)
     Game.ctx.strokeStyle = neonBlue;
     Game.ctx.lineWidth = 3;
-    
-    const segmentCount = 6;
-    const outerRadius = P * 0.9;
-    const innerRadius = P * 0.5;
-    const gapAngle = 0.1; // Space between segments
 
-    for (let i = 0; i < segmentCount; i++) {
-        const start = i * (Math.PI * 2 / segmentCount) + gapAngle;
-        const end = (i + 1) * (Math.PI * 2 / segmentCount) - gapAngle;
-        
-        Game.ctx.beginPath();
-        Game.ctx.arc(0, 0, outerRadius, start, end);
-        Game.ctx.stroke();
-    }
-    
-    // Draw Inner Ring (The maze-like inner structure)
-    Game.ctx.beginPath();
-    Game.ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
-    Game.ctx.stroke();
+    // --- CORE DRAWING (Always present) ---
+    const innerRadius = P * 0.5;
+    const coreSize = P * 0.3;
 
     // Draw Central Core (Solid glowing circle)
     Game.ctx.fillStyle = neonBlue;
     Game.ctx.shadowBlur = 20;
     Game.ctx.beginPath();
-    Game.ctx.arc(0, 0, P * 0.3, 0, Math.PI * 2);
+    Game.ctx.arc(0, 0, coreSize, 0, Math.PI * 2);
     Game.ctx.fill();
-
-    // Secondary detail: four small lines connecting the inner and outer rings (based on the image)
-    Game.ctx.lineWidth = 2;
-    Game.ctx.shadowBlur = 10;
-    for (let i = 0; i < 4; i++) {
-        const detailAngle = i * (Math.PI / 2) + Math.PI / 4;
-        Game.ctx.beginPath();
-        Game.ctx.moveTo(
-            Math.cos(detailAngle) * innerRadius,
-            Math.sin(detailAngle) * innerRadius
-        );
-        Game.ctx.lineTo(
-            Math.cos(detailAngle) * outerRadius,
-            Math.sin(detailAngle) * outerRadius
-        );
-        Game.ctx.stroke();
-    }
     
-    // Reset shadow/transform
+    // Reset shadow for cleaner outline
+    Game.ctx.shadowBlur = Game.currentStage * 5 + 10; 
+
+    // --- STAGE-SPECIFIC BODY DRAWING ---
+    
+    if (Game.currentStage === 1) {
+        // Original Stage 1 Design (Basic Segments)
+        const segmentCount = 6;
+        const outerRadius = P * 0.9;
+        const gapAngle = 0.1;
+
+        for (let i = 0; i < segmentCount; i++) {
+            const start = i * (Math.PI * 2 / segmentCount) + gapAngle;
+            const end = (i + 1) * (Math.PI * 2 / segmentCount) - gapAngle;
+            
+            Game.ctx.beginPath();
+            Game.ctx.arc(0, 0, outerRadius, start, end);
+            Game.ctx.stroke();
+        }
+        
+        // Draw Inner Ring (The original maze-like inner structure line)
+        Game.ctx.beginPath();
+        Game.ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
+        Game.ctx.stroke();
+
+        // Secondary detail: four small lines connecting the inner and outer rings (Original)
+        Game.ctx.lineWidth = 2;
+        Game.ctx.shadowBlur = 10;
+        for (let i = 0; i < 4; i++) {
+            const detailAngle = i * (Math.PI / 2) + Math.PI / 4;
+            Game.ctx.beginPath();
+            Game.ctx.moveTo(
+                Math.cos(detailAngle) * innerRadius,
+                Math.sin(detailAngle) * innerRadius
+            );
+            Game.ctx.lineTo(
+                Math.cos(detailAngle) * outerRadius,
+                Math.sin(detailAngle) * outerRadius
+            );
+            Game.ctx.stroke();
+        }
+
+    } else if (Game.currentStage === 2) {
+        // Stage 2 Design (Target Rings and simple 4-point structure)
+        
+        const outerRadius = P * 1.0;
+        Game.ctx.lineWidth = 2;
+
+        // 1. Target Rings (Concentric)
+        for (let r = 0; r < 3; r++) {
+            Game.ctx.beginPath();
+            Game.ctx.arc(0, 0, coreSize + (r + 1) * 6, 0, Math.PI * 2);
+            Game.ctx.stroke();
+        }
+
+        // 2. Simple Spikes (4 points)
+        const spikeCount = 4; 
+        Game.ctx.lineWidth = 3;
+
+        for (let i = 0; i < spikeCount; i++) {
+            const angle = i * (Math.PI * 2 / spikeCount); 
+            const angleOffset = angle + Math.PI / 4;
+            const spokeInner = P * 0.7;
+
+            // Simple V-shape spike
+            Game.ctx.beginPath();
+            Game.ctx.moveTo(
+                Math.cos(angleOffset - 0.1),
+                Math.sin(angleOffset - 0.1) 
+            ); // Start near center
+            Game.ctx.lineTo(
+                Math.cos(angleOffset) * outerRadius * 1.1,
+                Math.sin(angleOffset) * outerRadius * 1.1
+            ); // Tip
+            Game.ctx.lineTo(
+                Math.cos(angleOffset + 0.1) * spokeInner,
+                Math.sin(angleOffset + 0.1) * spokeInner
+            ); // Back to body
+            Game.ctx.stroke();
+        }
+
+    } else if (Game.currentStage === 3) {
+        // Stage 3 Design (Complex Outer Maze Ring - Based on Image 2)
+        
+        const outerRingRadius = P * 1.2;
+        const innerMazeRadius = P * 0.5;
+        const mazeSegments = 12;
+
+        Game.ctx.lineWidth = 3;
+        
+        // 1. Draw the complete outer ring first
+        Game.ctx.beginPath();
+        Game.ctx.arc(0, 0, outerRingRadius, 0, Math.PI * 2);
+        Game.ctx.stroke();
+
+        // 2. Draw segmented/stepped inner circle (maze structure)
+        Game.ctx.beginPath();
+        Game.ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
+        Game.ctx.stroke();
+
+        // 3. Maze paths (simulating the blocked path)
+        for (let i = 0; i < mazeSegments; i++) {
+            const angle = i * (Math.PI * 2 / mazeSegments);
+            const midRadius = innerRadius + (outerRingRadius - innerRadius) / 2;
+
+            // Radial line - breaks the circle segments
+            Game.ctx.beginPath();
+            Game.ctx.moveTo(Math.cos(angle) * innerRadius, Math.sin(angle) * innerRadius);
+            Game.ctx.lineTo(Math.cos(angle) * midRadius, Math.sin(angle) * midRadius);
+            Game.ctx.stroke();
+
+            // Tangential block (simulating a corner/step)
+            if (i % 3 === 1) {
+                 Game.ctx.beginPath();
+                 Game.ctx.moveTo(
+                     Math.cos(angle) * midRadius,
+                     Math.sin(angle) * midRadius
+                 );
+                 Game.ctx.lineTo(
+                     Math.cos(angle + Math.PI / mazeSegments) * midRadius,
+                     Math.sin(angle + Math.PI / mazeSegments) * midRadius
+                 );
+                 Game.ctx.stroke();
+            }
+        }
+
+    } else if (Game.currentStage === 4) {
+        // Stage 4 Design (Max Power: Spikes + Maze - Based on Image 1)
+        
+        // Use a different color scheme to indicate max level/Boss Fight
+        neonBlue = '#ff00ff'; // Magenta
+        neonGlow = 'rgba(255, 0, 255, 0.8)'; 
+        Game.ctx.strokeStyle = neonBlue;
+        Game.ctx.shadowColor = neonGlow;
+        
+        // 1. Outer Spikes (6 points)
+        const spikeCount = 6;
+        const spikeLength = P * 1.5;
+        Game.ctx.lineWidth = 4;
+
+        for (let i = 0; i < spikeCount; i++) {
+            const angle = i * (Math.PI * 2 / spikeCount);
+            const spokeInner = P * 0.8;
+
+            Game.ctx.beginPath();
+            Game.ctx.moveTo(
+                Math.cos(angle + 0.1) * spokeInner,
+                Math.sin(angle + 0.1) * spokeInner
+            );
+            Game.ctx.lineTo(
+                Math.cos(angle) * spikeLength,
+                Math.sin(angle) * spikeLength
+            );
+             Game.ctx.lineTo(
+                Math.cos(angle - 0.1) * spokeInner,
+                Math.sin(angle - 0.1) * spokeInner
+            );
+            Game.ctx.closePath();
+            Game.ctx.stroke();
+        }
+        
+        // 2. Inner Maze Ring (Complex segments inside the outer spikes)
+        const outerMazeRadius = P * 0.9;
+        const innerMazeRadius = P * 0.5;
+        const mazeSegments = 8;
+        Game.ctx.lineWidth = 3;
+
+        for (let i = 0; i < mazeSegments; i++) {
+            const startAngle = i * (Math.PI * 2 / mazeSegments);
+            const endAngle = (i + 1) * (Math.PI * 2 / mazeSegments);
+
+            // Outer ring segments
+            Game.ctx.beginPath();
+            Game.ctx.arc(0, 0, outerMazeRadius, startAngle, endAngle);
+            Game.ctx.stroke();
+
+            // Inner ring segments
+            Game.ctx.beginPath();
+            Game.ctx.arc(0, 0, innerMazeRadius, startAngle, endAngle);
+            Game.ctx.stroke();
+            
+            // Connecting radial line (to form the maze steps/walls)
+            if (i % 2 === 0) {
+                 Game.ctx.beginPath();
+                 Game.ctx.moveTo(
+                     Math.cos(startAngle + 0.1) * outerMazeRadius,
+                     Math.sin(startAngle + 0.1) * outerMazeRadius
+                 );
+                 Game.ctx.lineTo(
+                     Math.cos(startAngle + 0.1) * innerMazeRadius,
+                     Math.sin(startAngle + 0.1) * innerMazeRadius
+                 );
+                 Game.ctx.stroke();
+            }
+        }
+    }
+
+
+    // --- Reset ---
     Game.ctx.shadowBlur = 0;
     Game.ctx.shadowColor = 'transparent';
+    Game.ctx.globalAlpha = 1;
     Game.ctx.restore();
     // --- END DRAW PLAYER AS FUTURISTIC DISC ---
 
