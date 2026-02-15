@@ -244,25 +244,39 @@ async function authenticatePlayer() {
     }
 
     try {
-        const res = await fetch(`${BASE_URL}/api/auth/signup`, {
+        // First try LOGIN
+        let res = await fetch(`${BASE_URL}/api/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 email,
-                password: "game_default",
-                city
+                password: "game_default"
             })
         });
 
-        if (!res.ok) throw new Error("Signup failed");
+        // If login fails → try signup
+        if (!res.ok) {
+            res = await fetch(`${BASE_URL}/api/auth/signup`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email,
+                    password: "game_default",
+                    city
+                })
+            });
+        }
+
+        if (!res.ok) throw new Error("Auth failed");
 
         const data = await res.json();
 
         localStorage.setItem("playerId", data.playerId);
         localStorage.setItem("city", data.city);
+        localStorage.setItem("token", data.token);
 
     } catch (err) {
-        console.error("Auth failed → continuing without backend", err);
+        console.error("Auth failed → continuing offline", err);
     }
 
     document.getElementById("auth-overlay").style.display = "none";
