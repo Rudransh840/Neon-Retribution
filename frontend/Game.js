@@ -1355,7 +1355,8 @@ async function renderLeaderboard() {
     // Try backend first
     if (city) {
         try {
-            const res = await fetch(`http://localhost:5000/api/leaderboard/${city}`);
+            const res = await fetch(`https://neon-retribution-backend.onrender.com/api/
+${city}`);
 
             if (res.ok) {
                 const data = await res.json();
