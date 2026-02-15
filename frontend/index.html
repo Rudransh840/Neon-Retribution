@@ -3,226 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Test your skills in this adaptive difficulty shooter game. Survive waves, unlock weapons, and master all stages!">
-    <title>Neo-Retribution</title>
+    <meta name="description" content="Neon Retribution - Adaptive AI Shooter Game">
+    <title>Neon Retribution</title>
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
     <link rel="stylesheet" href="Style.css">
 </head>
+
 <body>
-    <div id="game-container">
-        <canvas id="gameCanvas"></canvas>
-        
-        <div id="ui">
-            <div class="ui-header">
-                <div id="stage">Stage: 1 - Training Ground</div>
-            </div>
-            <div class="ui-stats">
-                <div class="stat-item">
-                    <span class="stat-label">SCORE</span>
-                    <span id="score" class="stat-value">0</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">HEALTH</span>
-                    <span id="health" class="stat-value">100%</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">WAVE</span>
-                    <span id="wave" class="stat-value">1</span>
-                </div>
-            </div>
-            <div id="stage-timer">
-                <span class="timer-icon">⏱</span>
-                <span class="timer-text">Time Left: 1:00</span>
-            </div>
-            <div id="weapon" class="weapon-display">
-                <span class="weapon-icon">🎯</span>
-                <span class="weapon-text">Pulse Pistol</span>
-            </div>
-        </div>
-        
-        <div id="difficulty-meter">
-            <div id="difficulty-fill"></div>
-            <div id="difficulty-text">Difficulty: 15%</div>
-        </div>
-        
-        <div id="weapon-cooldown">
-            <div id="weapon-cooldown-fill"></div>
-        </div>
+<div id="game-container">
 
-        <div id="start-screen">
-            <div class="start-content">
-                <h1><span class="title-adaptive">NEON</span> <span class="title-shooter">RETRIBUTION</span></h1>
-                <div class="subtitle">Elite Combat Training</div>
-                <div class="controls">
-                    <div class="control-section">
-                        <h3>CONTROLS</h3>
-                        <div class="control-grid">
-                            <div class="control-item"><kbd>W A S D</kbd> <span>Move</span></div>
-                            <div class="control-item"><kbd>Mouse</kbd> <span>Aim</span></div>
-                            <div class="control-item"><kbd>Click</kbd> <span>Shoot</span></div>
-                            <div class="control-item"><kbd>1 2 3</kbd> <span>Switch Weapons</span></div>
-                            <div class="control-item"><kbd>P / Space</kbd> <span>Pause/Resume</span></div> </div>
-                    </div>
-                    <div class="stage-progression">
-                        <h3>STAGE PROGRESSION</h3>
-                        <div class="stage-list">
-                            <div class="stage-item">
-                                <span class="stage-number">01</span>
-                                <div class="stage-details">
-                                    <span class="stage-name">Training Ground</span>
-                                    <span class="stage-weapon">Pulse Pistol</span>
-                                </div>
-                            </div>
-                            <div class="stage-item">
-                                <span class="stage-number">02</span>
-                                <div class="stage-details">
-                                    <span class="stage-name">Combat Zone</span>
-                                    <span class="stage-weapon">Assault Rifle Unlocked</span>
-                                </div>
-                            </div>
-                            <div class="stage-item">
-                                <span class="stage-number">03</span>
-                                <div class="stage-details">
-                                    <span class="stage-name">Elite Arena</span>
-                                    <span class="stage-weapon">Shotgun Unlocked</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button id="start-btn">
-                    <span class="btn-text">START MISSION</span>
-                    <span class="btn-glow"></span>
-                </button>
+    <!-- ================= CANVAS ================= -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- ================= HUD ================= -->
+    <div id="ui">
+        <div id="stage">Stage: 1 - Training Ground</div>
+
+        <div class="ui-stats">
+            <div class="stat-item">
+                <span>SCORE</span>
+                <span id="score">0</span>
+            </div>
+            <div class="stat-item">
+                <span>HEALTH</span>
+                <span id="health">100%</span>
+            </div>
+            <div class="stat-item">
+                <span>WAVE</span>
+                <span id="wave">1</span>
             </div>
         </div>
 
-        <div id="loading-screen">
-            <div class="loading-content">
-                <h2>INITIALIZING COMBAT SYSTEMS</h2>
-                <div class="loading-bar-container">
-                    <div class="loading-bar">
-                        <div id="loading-bar"></div>
-                        <div class="loading-shimmer"></div>
-                    </div>
-                </div>
-                <div class="loading-percent-display">
-                    <span id="loading-percent">0</span><span class="percent-symbol">%</span>
-                </div>
-                <div class="loading-status">Preparing battlefield...</div>
-            </div>
-        </div>
+        <div id="stage-timer">⏱ Time Left: 1:00</div>
 
-        <div id="pause-screen" class="notification pause-notification">
-            <div class="pause-icon">⏸</div>
-            <h2>GAME PAUSED</h2>
-            <p class="pause-resume-info">Press 'P', 'Escape', or 'Spacebar' to resume combat.</p>
-        </div>
-        
-        <div id="boost-notification" class="notification unlock-notification">
-            <div class="unlock-badge">
-                <div class="unlock-icon-wrapper">
-                    <p class="weapon-icon boost-icon">🔥</p>
-                </div>
-                <h2 class="boost-title">FIRE RATE BOOST!</h2>
-            </div>
-            <p class="boost-desc">Weapon cooldown is reduced for 5 seconds!</p>
-        </div>
-
-        <div id="stage-start-notification" class="notification">
-            <div class="notification-header">
-                <h2 id="stage-title">TRAINING GROUND</h2>
-            </div>
-            <p class="notification-objective">Survive for 1 minute to advance</p>
-            <p class="extra-info"></p>
-            <div class="weapon-info">
-                <div class="weapon-badge">
-                    <span class="badge-icon">⚡</span>
-                    <span class="badge-label">Available Weapon</span>
-                </div>
-                <p class="weapon-name">Pulse Pistol</p>
-            </div>
-        </div>
-
-        <div id="weapon-unlock-notification" class="notification unlock-notification">
-            <div class="unlock-badge">
-                <div class="unlock-icon-wrapper">
-                    <p class="weapon-icon">🔫</p>
-                </div>
-                <h2>NEW WEAPON UNLOCKED!</h2>
-            </div>
-            <p class="weapon-name">Weapon Name</p>
-            <p class="weapon-desc">Press <kbd>3</kbd> to equip</p>
-        </div>
-
-        <div id="stage-complete-notification" class="notification complete-notification">
-            <div class="success-icon">✓</div>
-            <h2>STAGE COMPLETE!</h2>
-            <p class="stage-reward">🏆 New Weapon Unlocked</p>
-            <div class="next-stage">
-                <p class="next-stage-text">Preparing for next stage...</p>
-                <div class="countdown">3</div>
-            </div>
-        </div>
-
-        <div id="game-over-screen" class="notification gameover-notification">
-            <div class="gameover-icon">✕</div>
-            <h2>MISSION FAILED</h2>
-            <div class="final-stats">
-                <div class="final-stat">
-                    <span class="stat-label">Stage Reached</span>
-                    <span id="final-stage" class="stat-value">1</span>
-                </div>
-                <div class="final-stat">
-                    <span class="stat-label">Final Score</span>
-                    <span id="final-score" class="stat-value">0</span>
-                </div>
-                <div class="final-stat">
-                    <span class="stat-label">Total Kills</span>
-                    <span id="total-kills" class="stat-value">0</span>
-                </div>
-            </div>
-            <button id="restart-btn">
-                <span>TRY AGAIN</span>
-            </button>
-        </div>
-
-        <div id="victory-screen" class="notification victory-notification">
-            <div class="victory-icon">★</div>
-            <h2>VICTORY!</h2>
-            <p class="victory-message">You mastered all stages!</p>
-            <div class="final-stats">
-                <div class="final-stat highlight">
-                    <span class="stat-label">Final Score</span>
-                    <span id="victory-score" class="stat-value">0</span>
-                </div>
-            </div>
-            <p class="victory-achievement">🏆 All weapons unlocked!</p>
-            <button id="victory-restart-btn">
-                <span>PLAY AGAIN</span>
-            </button>
+        <div id="weapon">
+            🎯 Pulse Pistol
         </div>
     </div>
 
-    <script src="difficultymanager.js"></script>
-        <script src="Game.js"></script>
-    <script src="drone.js"></script>
+    <!-- Difficulty Meter -->
+    <div id="difficulty-meter">
+        <div id="difficulty-fill"></div>
+        <div id="difficulty-text">Difficulty: 15%</div>
+    </div>
+
+    <!-- Weapon Cooldown -->
+    <div id="weapon-cooldown">
+        <div id="weapon-cooldown-fill"></div>
+    </div>
+
+    <!-- ================= START SCREEN ================= -->
+    <div id="start-screen">
+        <div class="start-content">
+            <h1>NEON RETRIBUTION</h1>
+            <p>Elite Combat Training Simulation</p>
+
+            <button id="start-btn">START MISSION</button>
+        </div>
+    </div>
+
+    <!-- ================= LOADING SCREEN ================= -->
+    <div id="loading-screen">
+        <div class="loading-content">
+            <h2>Initializing Systems...</h2>
+            <div class="loading-bar">
+                <div id="loading-bar"></div>
+            </div>
+            <div>
+                <span id="loading-percent">0</span>%
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= PAUSE ================= -->
+    <div id="pause-screen" class="notification">
+        <h2>GAME PAUSED</h2>
+        <p>Press P / Space / ESC to Resume</p>
+    </div>
+
+    <!-- ================= STAGE START ================= -->
+    <div id="stage-start-notification" class="notification">
+        <h2 id="stage-title">TRAINING GROUND</h2>
+        <p class="extra-info"></p>
+    </div>
+
+    <!-- ================= WEAPON UNLOCK ================= -->
+    <div id="weapon-unlock-notification" class="notification">
+        <h2>NEW WEAPON UNLOCKED</h2>
+        <p class="weapon-name"></p>
+        <p class="weapon-desc"></p>
+    </div>
+
+    <!-- ================= STAGE COMPLETE ================= -->
+    <div id="stage-complete-notification" class="notification">
+        <h2>STAGE COMPLETE</h2>
+        <div class="countdown">3</div>
+    </div>
+
+    <!-- ================= GAME OVER ================= -->
+    <div id="game-over-screen" class="notification">
+        <h2>MISSION FAILED</h2>
+        <p>Stage: <span id="final-stage">1</span></p>
+        <p>Score: <span id="final-score">0</span></p>
+        <p>Kills: <span id="total-kills">0</span></p>
+        <button id="restart-btn">TRY AGAIN</button>
+    </div>
+
+    <!-- ================= VICTORY ================= -->
+    <div id="victory-screen" class="notification">
+        <h2>VICTORY</h2>
+        <p>Final Score: <span id="victory-score">0</span></p>
+        <button id="victory-restart-btn">PLAY AGAIN</button>
+    </div>
+
+    <!-- ================= LEADERBOARD ================= -->
     <div id="leaderboard" class="leaderboard">
-  <h3>City Leaderboard</h3>
-  <ul id="leaderboard-list"></ul>
-</div>
+        <h3>City Leaderboard</h3>
+        <ul id="leaderboard-list"></ul>
+    </div>
+
+    <!-- ================= AUTH OVERLAY ================= -->
     <div id="auth-overlay" class="auth-overlay">
-  <div class="auth-popup">
-    <h2>Enter the Arena</h2>
+        <div class="auth-popup">
+            <h2>Enter the Arena</h2>
+            <input type="email" id="auth-email" placeholder="Email">
+            <input type="text" id="auth-city" placeholder="City">
+            <button id="auth-btn">Start Game</button>
+        </div>
+    </div>
 
-    <input type="email" id="auth-email" placeholder="Email" />
-    <input type="text" id="auth-city" placeholder="City" />
-
-    <button id="auth-btn">Start Game</button>
-  </div>
 </div>
+
+<!-- ================= SCRIPT ORDER (VERY IMPORTANT) ================= -->
+
+<script src="difficultymanager.js"></script>
+<script src="drone.js"></script>
+<script src="Game.js"></script>
 
 </body>
 </html>

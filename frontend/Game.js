@@ -1,6 +1,14 @@
 // Game.js - UPDATED WITH STAGE-BASED PLAYER DRAWING
 
 // Game Configuration
+/* ============================= */
+/* ===== GLOBAL CONFIG FIX ===== */
+/* ============================= */
+
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : "https://neon-retribution-backend.onrender.com";
 const Config = {
     PLAYER: {
         SIZE: 30,
@@ -236,7 +244,7 @@ async function authenticatePlayer() {
     }
 
     try {
-        const res = await fetch("http://localhost:5000/api/auth/signup", {
+        const res = await fetch(`${BASE_URL}/api/auth/signup`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -246,23 +254,22 @@ async function authenticatePlayer() {
             })
         });
 
+        if (!res.ok) throw new Error("Signup failed");
+
         const data = await res.json();
 
         localStorage.setItem("playerId", data.playerId);
         localStorage.setItem("city", data.city);
 
-        document.getElementById("auth-overlay").style.display = "none";
-        document.getElementById("start-screen").style.display = "flex";
-        
-        renderLeaderboard();
-
     } catch (err) {
-        console.error("Auth failed", err);
-        document.getElementById("auth-overlay").style.display = "none";
-        document.getElementById("start-screen").style.display = "flex";
-        renderLeaderboard();
+        console.error("Auth failed → continuing without backend", err);
     }
+
+    document.getElementById("auth-overlay").style.display = "none";
+    document.getElementById("start-screen").style.display = "flex";
+    renderLeaderboard();
 }
+
 
 function startGame() {
     Game.running = true;
@@ -1226,8 +1233,9 @@ function gameOver() {
     const playerId = localStorage.getItem("playerId");
     const city = localStorage.getItem("city");
 
+    // Save game result to backend (production safe)
     if (playerId && city) {
-        fetch("http://localhost:5000/api/game/finish", {
+        fetch(`${BASE_URL}/api/game/finish`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -1237,9 +1245,15 @@ function gameOver() {
                 city,
                 score: Game.player.score,
                 stage: Game.currentStage,
-                accuracy: Game.performanceMetrics.totalHits / (Game.performanceMetrics.totalShotsFired || 1) * 100
+                accuracy:
+                    Game.performanceMetrics.totalHits /
+                    (Game.performanceMetrics.totalShotsFired || 1) * 100
             })
-        }).catch(err => console.error("Failed to save game:", err));
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("Failed to save score");
+        })
+        .catch(err => console.error("Failed to save game:", err));
     }
 
     const gameOverScreen = document.getElementById('game-over-screen');
@@ -1352,18 +1366,18 @@ async function renderLeaderboard() {
     let leaderboardData = [];
     const city = localStorage.getItem("city");
 
-    // Try backend first
     if (city) {
         try {
-            const res = await fetch(`https://neon-retribution-backend.onrender.com/api/
-${city}`);
+            const res = await fetch(`${BASE_URL}/api/leaderboard/${city}`);
 
             if (res.ok) {
                 const data = await res.json();
 
                 if (Array.isArray(data) && data.length > 0) {
                     leaderboardData = data.map(player => ({
-                        name: player.email ? player.email.split("@")[0] : "Player",
+                        name: player.email
+                            ? player.email.split("@")[0]
+                            : "Player",
                         score: player.bestScore || 0,
                         stage: player.maxStage || 1
                     }));
@@ -1371,11 +1385,11 @@ ${city}`);
             }
 
         } catch (err) {
-            console.log("Backend not available → using fake leaderboard");
+            console.log("Backend unavailable → using fake leaderboard");
         }
     }
 
-    // If backend empty or failed → use fake data
+    // Fallback to fake data if backend empty
     if (leaderboardData.length === 0) {
         leaderboardData = generateFakeLeaderboard();
     }
