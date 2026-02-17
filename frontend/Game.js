@@ -77,7 +77,7 @@ const Config = {
     GAME: {
         WAVE_SPAWN_RATE: 60,
         DIFFICULTY_INCREASE: 0.1,
-        STAGE_DURATION: 6000,
+        STAGE_DURATION: 60000,
         MAX_ENEMIES: 20
     },
     STAGES: {
