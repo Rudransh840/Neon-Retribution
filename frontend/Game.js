@@ -77,7 +77,7 @@ const Config = {
     GAME: {
         WAVE_SPAWN_RATE: 60,
         DIFFICULTY_INCREASE: 0.1,
-        STAGE_DURATION: 60000,
+        STAGE_DURATION: 6000,
         MAX_ENEMIES: 20
     },
     STAGES: {
@@ -244,39 +244,25 @@ async function authenticatePlayer() {
     }
 
     try {
-        // First try LOGIN
-        let res = await fetch(`${BASE_URL}/api/auth/login`, {
+        const res = await fetch(`${BASE_URL}/api/auth/signup`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 email,
-                password: "game_default"
+                password: "game_default",
+                city
             })
         });
 
-        // If login fails → try signup
-        if (!res.ok) {
-            res = await fetch(`${BASE_URL}/api/auth/signup`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    email,
-                    password: "game_default",
-                    city
-                })
-            });
-        }
-
-        if (!res.ok) throw new Error("Auth failed");
+        if (!res.ok) throw new Error("Signup failed");
 
         const data = await res.json();
 
         localStorage.setItem("playerId", data.playerId);
         localStorage.setItem("city", data.city);
-        localStorage.setItem("token", data.token);
 
     } catch (err) {
-        console.error("Auth failed → continuing offline", err);
+        console.error("Auth failed → continuing without backend", err);
     }
 
     document.getElementById("auth-overlay").style.display = "none";
@@ -860,8 +846,8 @@ function render() {
 
     // Draw stage info
     const timeLeft = Math.max(0, Config.GAME.STAGE_DURATION - (Date.now() - Game.stageStartTime));
-    const minutes = Math.floor(timeLeft / 60000);
-    const seconds = Math.floor((timeLeft % 60000) / 1000);
+    const minutes = Math.floor(timeLeft / 1000);
+    const seconds = Math.floor((timeLeft % 1000) / 1000);
 
     const stageElement = document.getElementById('stage');
     if (stageElement) {
